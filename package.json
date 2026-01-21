@@ -1,0 +1,24 @@
+{
+  "name": "ynab-csv-importer",
+  "version": "1.0.0",
+  "description": "Automate YNAB transaction imports from CSV files",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "test": "npm run build && node dist/index.js --dry-run"
+  },
+  "keywords": ["ynab", "csv", "import", "automation"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3"
+  }
+}
