@@ -18,8 +18,11 @@ const isDryRun = process.argv.includes('--dry-run');
  * @param amount - Dollar amount
  * @returns Amount in milliunits
  */
-function convertToMilliunits(amount: string | number): number {
+function convertToMilliunits(amount: string | number, isCredit: boolean = false): number {
   const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/[$,]/g, '')) : amount;
+  if (isCredit) {
+    return Math.round(numAmount * 1000);
+  }
   return -Math.round(numAmount * 1000);
 }
 
@@ -47,10 +50,11 @@ async function readTransactionsFromCSV(filePath: string): Promise<YNABTransactio
       .on('data', (row: CSVRow) => {
         // Map CSV columns to YNAB transaction format
         // Adjust column names to match your CSV file
+        // Date,Description,Debit,Credit,Balance
         const transaction: YNABTransaction = {
           account_id: ACCOUNT_ID!,
           date: formatDate(row.date || row.Date || ''),
-          amount: convertToMilliunits(row.amount || row.Amount || '0'),
+          amount: convertToMilliunits(row.debit || row.Debit || `${row.Credit}` || '0', !!row.Credit),
           memo: row.memo || row.Memo || row.description || row.Description || '',
           cleared: 'uncleared',
           approved: false
@@ -59,6 +63,11 @@ async function readTransactionsFromCSV(filePath: string): Promise<YNABTransactio
         // Add payee if provided
         if (row.payee || row.Payee) {
           transaction.payee_name = row.payee || row.Payee;
+        }
+
+        // Add category if provided
+        if (row.category || row.Category) {
+          transaction.category_id = row.cateory || row.Category;
         }
 
         transactions.push(transaction);
@@ -135,7 +144,7 @@ async function main(): Promise<void> {
     
     console.log(`\nFound ${transactions.length} transactions:`);
     transactions.forEach((t, i) => {
-      console.log(`  ${i + 1}. ${t.date} - $${(t.amount / 1000).toFixed(2)} - ${t.memo || '(no memo)'} - Payee: ${t.payee_name || '(no payee)'}`);
+      console.log(`  ${i + 1}. ${t.date} - $${(t.amount / 1000).toFixed(2)} - ${t.memo || '(no memo)'} - Payee: ${t.payee_name || '(no payee)'} - CategoryId: ${t.category_id || '(no category)'}`);
     });
 
     if (isDryRun) {
